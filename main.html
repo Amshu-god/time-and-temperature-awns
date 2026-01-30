@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Live Clock & Weather</title>
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=New+Rocker&display=swap" rel="stylesheet">
+  <style>
+    *{
+        scrollbar-width: none;
+    }
+    body {
+      font-family: "New Rocker", system-ui;
+        font-weight: 400;
+        font-style: normal;
+      background: linear-gradient(135deg, #000000, #000000);
+      color: rgb(255, 102, 0);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+      margin: 0;
+      scrollbar-width: none;
+    }
+
+    .card {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 30px 40px;
+      border-radius: 12px;
+      text-align: center;
+      scrollbar-width: none;
+ /* width: 300px; */
+    }
+body::-webkit-scrollbar {
+    display: none;
+}
+
+.time {
+      display: grid;
+      grid-template-columns: 5fr 2fr;
+      justify-content: center;
+      align-items: baseline;
+    }
+    #clock {
+        text-align: left;
+      font-size: 16vw;
+      margin-bottom: 10px;
+    }
+.ampm {
+      font-size: 16vw;
+      vertical-align: super;
+    }
+    #date {
+      font-size: 8vw;
+      margin-bottom: 20px;
+    }
+
+    #weather {
+      font-size: 6vw;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="time">
+
+        <div id="clock">--:--:--</div>
+        <div id="ampm" class="ampm">AM</div>
+    </div>
+    <div id="date">Loading date...</div>
+    <div id="weather"><div class="weatherinfo">
+        <span class="temperature">Loading.......</span>
+        <span class="visibility">Loading.......</span>
+    </div></div>
+  </div>
+
+  <script>
+    // LIVE CLOCK & DATE
+    // hours is used in weather function for fetching weater data of current hour
+    let Hours = 0;
+    //update time every second
+    function updateTime() {
+      // Get current time and date
+      const now = new Date();
+      // Format time as HH:MM:SS AM/PM
+      const time = now.toLocaleTimeString();
+      // Split time and AM/PM
+    const timearray = time.split(" ");
+    console.log(timearray);
+    // Get current hours for weather function
+        Hours = now.getHours()
+        // Format date as Weekday, Month Day
+      const date = now.toLocaleDateString(undefined, {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric'
+      });
+      // Update HTML elements
+      document.getElementById('clock').textContent = timearray[0];
+      document.getElementById('ampm').textContent = timearray[1];
+      if(timearray[1] == 'PM'){
+        Hours = Hours + 12;
+      }
+      document.getElementById('date').textContent = date;
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // WEATHER
+
+    async function getWeather() {
+      // Fetch weather data from Open-Meteo API
+      try {
+        const res = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=26.67&longitude=87.6349&hourly=temperature_2m,visibility&timezone=auto`
+        );
+        const data = await res.json();
+        // Process and display weather data
+        let index = Math.floor(Hours);
+        let temperature = data.hourly.temperature_2m[index];
+        // Determine temperature emoji
+        switch (true) {
+  case (temperature < 0):
+    tempEmoji = "❄️";
+    break;
+
+  case (temperature >= 0 && temperature <= 5):
+    tempEmoji = "🥶";
+    break;
+
+  case (temperature >= 6 && temperature <= 10):
+    tempEmoji = "🧣";
+    break;
+
+  case (temperature >= 11 && temperature <= 15):
+    tempEmoji = "🌬️";
+    break;
+
+  case (temperature >= 16 && temperature <= 20):
+    tempEmoji = "🙂";
+    break;
+
+  case (temperature >= 21 && temperature <= 25):
+    tempEmoji = "🌤️";
+    break;
+
+  case (temperature >= 26 && temperature <= 30):
+    tempEmoji = "😎";
+    break;
+
+  case (temperature >= 31 && temperature <= 35):
+    tempEmoji = "🔥";
+    break;
+
+  case (temperature >= 36 && temperature <= 40):
+    tempEmoji = "🥵";
+    break;
+
+  default:
+    tempEmoji = "☀️🔥"; // 40°C+
+}
+        // Determine visibility emoji
+        let visibility = data.hourly.visibility[index]/100;
+
+switch (true) {
+  case (visibility < 200):
+    visibilityEmoji = "🌫️"; // very dense fog
+    break;
+
+  case (visibility >= 200 && visibility < 500):
+    visibilityEmoji = "😶‍🌫️"; // dense fog
+    break;
+
+  case (visibility >= 500 && visibility < 1000):
+    visibilityEmoji = "🌁"; // foggy
+    break;
+
+  case (visibility >= 1000 && visibility < 3000):
+    visibilityEmoji = "🌫️🌬️"; // misty / haze
+    break;
+
+  case (visibility >= 3000 && visibility < 6000):
+    visibilityEmoji = "🌤️"; // slightly hazy
+    break;
+
+  case (visibility >= 6000 && visibility < 10000):
+    visibilityEmoji = "🙂"; // mostly clear
+    break;
+
+  default:
+    visibilityEmoji = "🔭"; // crystal clear (10km+)
+}
+
+//log temperature for debugging
+        console.log(data.hourly.temperature_2m[index]);
+        // Create HTML content
+        const weatherHTML = `
+            <div class="weatherinfo">
+        <span class="temperature">${tempEmoji} ${temperature}℃</span>
+        <span class="visibility">${visibilityEmoji} ${visibility}m</span>
+    </div>
+        `;
+
+        document.getElementById('weather').innerHTML = weatherHTML;
+      } catch (error) {
+       document.getElementById('weather').textContent = "Weather unavailable";
+      }
+    }
+    // Initial weather fetch and set interval for updates
+    getWeather();
+    let timeoutID = setTimeout(getWeather(), 9600); // Update weather every minute
+  </script>
+
+</body>
+</html>
