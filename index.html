@@ -103,9 +103,6 @@ body::-webkit-scrollbar {
       // Update HTML elements
       document.getElementById('clock').textContent = timearray[0];
       document.getElementById('ampm').textContent = timearray[1];
-      if(timearray[1] == 'PM'){
-        Hours = Hours + 12;
-      }
       document.getElementById('date').textContent = date;
     }
     setInterval(updateTime, 1000);
